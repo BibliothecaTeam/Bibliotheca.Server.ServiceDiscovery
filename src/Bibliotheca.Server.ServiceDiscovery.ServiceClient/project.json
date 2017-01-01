@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "buildOptions": {
+    "debugType": "portable",
+    "warningsAsErrors": true
+  },
+  "dependencies": {
+    "Microsoft.Extensions.Configuration": "1.1.0",
+    "System.Net.NameResolution": "4.3.0",
+    "Consul": "0.7.0.5"
+  },
+  "frameworks": {
+    "netstandard1.6": {
+      "dependencies": {
+        "NETStandard.Library": "1.6.1"
+      }
+    }
+  }
+}
