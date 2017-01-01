@@ -4,15 +4,39 @@ using System.Net;
 using System.Net.Sockets;
 using Bibliotheca.Server.ServiceDiscovery.ServiceClient.Exceptions;
 using Consul;
-using Microsoft.Extensions.Configuration;
 
 namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 {
-    public class ServiceDiscovery
+    public class ServiceDiscoveryClient
     {
-        public void Register(IConfigurationRoot configuration)
+        public void Register(ClientOptions clientOptions)
         {
-            CatalogRegistration catalogRegister = CreateCatalogRegistration(configuration);
+            if(string.IsNullOrWhiteSpace(clientOptions.ServiceId))
+            {
+                throw new ServiceIdNotDeliveredException();
+            }
+
+            if(string.IsNullOrWhiteSpace(clientOptions.ServiceName))
+            {
+                throw new ServiceNameNotDeliveredException();
+            }
+
+            if(string.IsNullOrWhiteSpace(clientOptions.Datacenter))
+            {
+                throw new DatacenterNotDeliveredException();
+            }
+
+            if(string.IsNullOrWhiteSpace(clientOptions.AgentAddress))
+            {
+                throw new AgentAddressNotDeliveredException();
+            }
+
+            if(clientOptions.ClientPort == 0)
+            {
+                throw new ClientPortNotDeliveredException();
+            }
+
+            CatalogRegistration catalogRegister = CreateCatalogRegistration(clientOptions);
             WriteResult writeResult = null;
             try
             {
@@ -30,51 +54,34 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             }
         }
 
-        private CatalogRegistration CreateCatalogRegistration(IConfigurationRoot configuration)
+        private CatalogRegistration CreateCatalogRegistration(ClientOptions clientOptions)
         {
-            var serviceDiscoverySection = configuration.GetSection("ServiceDiscovery");
-            var serviceId = serviceDiscoverySection["ServiceId"];
-            var serviceName = serviceDiscoverySection["ServiceName"];
-            var agentAddress = serviceDiscoverySection["AgentAddress"];
-            var datacenter = serviceDiscoverySection["Datacenter"];
-
             var randomNodeId = GenerateRandomNode(6);
-            var nodeId = $"{serviceId} - node {randomNodeId}";
+            var nodeId = $"{clientOptions.ServiceId} - node {randomNodeId}";
 
             var catalogRegister = new CatalogRegistration();
-            catalogRegister.Datacenter = datacenter;
+            catalogRegister.Datacenter = clientOptions.Datacenter;
             catalogRegister.Node = nodeId;
-            catalogRegister.Address = agentAddress;
+            catalogRegister.Address = clientOptions.AgentAddress;
 
-            var localAddress = GetLocalAddress();
-            var localPort = GetPort(configuration);
+            var localAddress = string.IsNullOrWhiteSpace(clientOptions.ClientAddres) 
+                ? GetLocalAddress() : clientOptions.ClientAddres;
+            var localPort = clientOptions.ClientPort;
 
             catalogRegister.Service = new AgentService();
-            catalogRegister.Service.ID = serviceId;
-            catalogRegister.Service.Service = serviceName;
+            catalogRegister.Service.ID = clientOptions.ServiceId;
+            catalogRegister.Service.Service = clientOptions.ServiceName;
             catalogRegister.Service.Address = localAddress;
             catalogRegister.Service.Port = localPort;
 
             catalogRegister.Check = new AgentCheck();
             catalogRegister.Check.Node = nodeId;
-            catalogRegister.Check.CheckID = $"service:{serviceId}";
-            catalogRegister.Check.Name = $"{serviceName} Health Check";
+            catalogRegister.Check.CheckID = $"service:{clientOptions.ServiceId}";
+            catalogRegister.Check.Name = $"{clientOptions.ServiceName} Health Check";
             catalogRegister.Check.Notes = "Script based health check";
             catalogRegister.Check.Status = CheckStatus.Passing;
-            catalogRegister.Check.ServiceID = serviceId;
+            catalogRegister.Check.ServiceID = clientOptions.ServiceId;
             return catalogRegister;
-        }
-
-        private int GetPort(IConfigurationRoot configuration)
-        {
-            var address = configuration["server.urls"];
-            if (!string.IsNullOrWhiteSpace(address))
-            {
-                var url = new Uri(address);
-                return url.Port;
-            }
-
-            return 5000;
         }
 
         private string GetLocalAddress()
