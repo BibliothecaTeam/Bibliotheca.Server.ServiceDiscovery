@@ -1,5 +1,15 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "authors": [
+    "@mczachurski"
+  ],
+  "description": "Library with helper class for registration Bibliotheca microservices in service discovery.",
+  "title": "Bibliotheca.Server.ServiceDiscovery.ServiceClient",
+  "language": "C#",
+  "packOptions": {
+    "projectUrl": "https://github.com/mczachurski/Bibliotheca.Server.ServiceDiscovery",
+    "licenseUrl": "https://opensource.org/licenses/MIT"
+  },
   "buildOptions": {
     "debugType": "portable",
     "warningsAsErrors": true
