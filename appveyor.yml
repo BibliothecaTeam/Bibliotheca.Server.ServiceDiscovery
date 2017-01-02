@@ -39,6 +39,7 @@ before_build:
 
 build_script:
   - dotnet build "src\Bibliotheca.Server.ServiceDiscovery.ServiceClient" -c %CONFIGURATION%
+  - dotnet build "test\Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs" -c %CONFIGURATION%
 
 #-----------------------------------------------------------------#
 # Test configuration.                                             #

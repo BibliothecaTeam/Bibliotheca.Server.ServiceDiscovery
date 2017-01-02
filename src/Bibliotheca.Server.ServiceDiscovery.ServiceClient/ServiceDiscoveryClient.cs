@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Net;
-using System.Net.Sockets;
 using Bibliotheca.Server.ServiceDiscovery.ServiceClient.Exceptions;
 using Consul;
 
@@ -36,25 +35,20 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
                 throw new ServerAddressNotDeliveredException();
             }
 
-            if (serverOptions.Port == 0)
-            {
-                throw new ServerPortNotDeliveredException();
-            }
-
             AgentServiceRegistration agentServiceRegistration = CreateAgentServiceRegistration(serviceOptions);
             WriteResult writeResult = null;
             try
             {
                 var client = new ConsulClient((configuration) => 
                 {
-                    configuration.Address = new Uri($"{serverOptions.Address}:{serverOptions.Port}");
+                    configuration.Address = new Uri(serverOptions.Address);
                 });
 
                 writeResult = client.Agent.ServiceRegister(agentServiceRegistration).GetAwaiter().GetResult();
             }
-            catch
+            catch(Exception exception)
             {
-                throw new ServiceDiscoveryRegistrationException("Exception during registration node.");
+                throw new ServiceDiscoveryRegistrationException($"Exception during registration node: {exception.Message}" );
             }
 
             if (writeResult.StatusCode != HttpStatusCode.Created && writeResult.StatusCode != HttpStatusCode.OK)
@@ -68,13 +62,9 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             var randomNodeId = GenerateRandomNode(6);
             var serviceUniqueId = $"{serviceOptions.Id}-{randomNodeId}";
 
-            var localAddress = string.IsNullOrWhiteSpace(serviceOptions.Address)
-                ? GetLocalAddress() : serviceOptions.Address;
-            var localPort = serviceOptions.Port;
-
             var agentServiceRegistration = new AgentServiceRegistration();
-            agentServiceRegistration.Address = localAddress;
-            agentServiceRegistration.Port = localPort;
+            agentServiceRegistration.Address = serviceOptions.Address;
+            agentServiceRegistration.Port = serviceOptions.Port;
             agentServiceRegistration.ID = serviceUniqueId;
             agentServiceRegistration.Name = serviceOptions.Name;
 
@@ -84,21 +74,6 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             agentServiceRegistration.Check.HTTP = serviceOptions.HttpHealthCheck;
 
             return agentServiceRegistration;
-        }
-
-        private string GetLocalAddress()
-        {
-            var hostName = Dns.GetHostName();
-            IPAddress[] addresses = Dns.GetHostAddressesAsync(hostName).GetAwaiter().GetResult();
-            foreach (var ip in addresses)
-            {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    return ip.ToString();
-                }
-            }
-
-            return string.Empty;
         }
 
         private string GenerateRandomNode(int length)
