@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Bibliotheca.Server.ServiceDiscovery.ServiceClient;
 using Xunit;
 
@@ -9,25 +10,19 @@ namespace Tests
         [Fact]
         public void ServiceClientHaveToExecuteWithCorrectConfiguration()
         {
-            var serviceOptions = new ServiceOptions
-            {
-                Id = "fake-id",
-                Name = "Fake name",
-                Address = "127.10.10.10",
-                Port = 5000,
-                HttpHealthCheck = ""
-            };
-
-            var serverOptions = new ServerOptions
-            {
-                Address = "http://127.0.0.1:8500"
-            };
-
-            var serviceDiscovery = new ServiceDiscoveryClient();
-
             try
             {
-                serviceDiscovery.Register(serviceOptions, serverOptions);
+                var serviceDiscovery = new ServiceDiscoveryClient();
+                serviceDiscovery.Register((options) => 
+                {
+                    options.ServiceOptions.Id = "fake-id";
+                    options.ServiceOptions.Name = "Fake name";
+                    options.ServiceOptions.Address = "127.9.9.9";
+                    options.ServiceOptions.Port = 5555;
+                    options.ServiceOptions.HttpHealthCheck = string.Empty;
+                    options.ServiceOptions.Tags = new List<string>(){ "tag1", "tag2" };
+                    options.ServerOptions.Address = "http://127.0.0.1:8500";
+                });
             }
             catch (Exception exception)
             {

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 {
     public class ServiceOptions
@@ -11,5 +13,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
         public int Port { get; set; }
 
         public string HttpHealthCheck { get; set; }
+
+        public IList<string> Tags { get; set; }
     }
 }

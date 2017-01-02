@@ -8,52 +8,60 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 {
     public class ServiceDiscoveryClient
     {
-        public void Register(ServiceOptions serviceOptions, ServerOptions serverOptions)
+        public void Register(Action<ServiceDiscoveryOptions> actionOptions)
         {
-            if (string.IsNullOrWhiteSpace(serviceOptions.Id))
-            {
-                throw new ServiceIdNotDeliveredException();
-            }
+            var options = new ServiceDiscoveryOptions();
+            actionOptions?.Invoke(options);
 
-            if (string.IsNullOrWhiteSpace(serviceOptions.Name))
-            {
-                throw new ServiceNameNotDeliveredException();
-            }
+            ValidateOptions(options);
 
-            if (string.IsNullOrWhiteSpace(serviceOptions.Address))
-            {
-                throw new ServiceAddressNotDeliveredException();
-            }
-
-            if (serviceOptions.Port == 0)
-            {
-                throw new ServicePortNotDeliveredException();
-            }
-
-            if (string.IsNullOrWhiteSpace(serverOptions.Address))
-            {
-                throw new ServerAddressNotDeliveredException();
-            }
-
-            AgentServiceRegistration agentServiceRegistration = CreateAgentServiceRegistration(serviceOptions);
+            var agentServiceRegistration = CreateAgentServiceRegistration(options.ServiceOptions);
             WriteResult writeResult = null;
             try
             {
-                var client = new ConsulClient((configuration) => 
+                var client = new ConsulClient((configuration) =>
                 {
-                    configuration.Address = new Uri(serverOptions.Address);
+                    configuration.Address = new Uri(options.ServerOptions.Address);
                 });
 
                 writeResult = client.Agent.ServiceRegister(agentServiceRegistration).GetAwaiter().GetResult();
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
-                throw new ServiceDiscoveryRegistrationException($"Exception during registration node: {exception.Message}" );
+                throw new ServiceDiscoveryRegistrationException($"Exception during registration node: {exception.Message}");
             }
 
             if (writeResult.StatusCode != HttpStatusCode.Created && writeResult.StatusCode != HttpStatusCode.OK)
             {
                 throw new ServiceDiscoveryResponseException("Registration failed.");
+            }
+        }
+
+        private void ValidateOptions(ServiceDiscoveryOptions options)
+        {
+            if (string.IsNullOrWhiteSpace(options.ServiceOptions.Id))
+            {
+                throw new ServiceIdNotDeliveredException();
+            }
+
+            if (string.IsNullOrWhiteSpace(options.ServiceOptions.Name))
+            {
+                throw new ServiceNameNotDeliveredException();
+            }
+
+            if (string.IsNullOrWhiteSpace(options.ServiceOptions.Address))
+            {
+                throw new ServiceAddressNotDeliveredException();
+            }
+
+            if (options.ServiceOptions.Port == 0)
+            {
+                throw new ServicePortNotDeliveredException();
+            }
+
+            if (string.IsNullOrWhiteSpace(options.ServerOptions.Address))
+            {
+                throw new ServerAddressNotDeliveredException();
             }
         }
 
@@ -67,10 +75,11 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             agentServiceRegistration.Port = serviceOptions.Port;
             agentServiceRegistration.ID = serviceUniqueId;
             agentServiceRegistration.Name = serviceOptions.Name;
+            agentServiceRegistration.Tags = serviceOptions.Tags.ToArray();
 
             agentServiceRegistration.Check = new AgentServiceCheck();
             agentServiceRegistration.Check.Interval = TimeSpan.FromSeconds(10);
-            agentServiceRegistration.Check.TTL = TimeSpan.FromSeconds(15);
+            agentServiceRegistration.Check.Timeout = TimeSpan.FromSeconds(2);
             agentServiceRegistration.Check.HTTP = serviceOptions.HttpHealthCheck;
 
             return agentServiceRegistration;
