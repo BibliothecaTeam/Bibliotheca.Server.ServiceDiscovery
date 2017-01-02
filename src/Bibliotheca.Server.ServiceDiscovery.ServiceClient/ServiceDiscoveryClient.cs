@@ -9,39 +9,48 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 {
     public class ServiceDiscoveryClient
     {
-        public void Register(ClientOptions clientOptions)
+        public void Register(ServiceOptions serviceOptions, ServerOptions serverOptions)
         {
-            if(string.IsNullOrWhiteSpace(clientOptions.ServiceId))
+            if (string.IsNullOrWhiteSpace(serviceOptions.Id))
             {
                 throw new ServiceIdNotDeliveredException();
             }
 
-            if(string.IsNullOrWhiteSpace(clientOptions.ServiceName))
+            if (string.IsNullOrWhiteSpace(serviceOptions.Name))
             {
                 throw new ServiceNameNotDeliveredException();
             }
 
-            if(string.IsNullOrWhiteSpace(clientOptions.Datacenter))
+            if (string.IsNullOrWhiteSpace(serviceOptions.Address))
             {
-                throw new DatacenterNotDeliveredException();
+                throw new ServiceAddressNotDeliveredException();
             }
 
-            if(string.IsNullOrWhiteSpace(clientOptions.AgentAddress))
+            if (serviceOptions.Port == 0)
             {
-                throw new AgentAddressNotDeliveredException();
+                throw new ServicePortNotDeliveredException();
             }
 
-            if(clientOptions.ClientPort == 0)
+            if (string.IsNullOrWhiteSpace(serverOptions.Address))
             {
-                throw new ClientPortNotDeliveredException();
+                throw new ServerAddressNotDeliveredException();
             }
 
-            CatalogRegistration catalogRegister = CreateCatalogRegistration(clientOptions);
+            if (serverOptions.Port == 0)
+            {
+                throw new ServerPortNotDeliveredException();
+            }
+
+            AgentServiceRegistration agentServiceRegistration = CreateAgentServiceRegistration(serviceOptions);
             WriteResult writeResult = null;
             try
             {
-                var client = new ConsulClient();
-                writeResult = client.Catalog.Register(catalogRegister).GetAwaiter().GetResult();
+                var client = new ConsulClient((configuration) => 
+                {
+                    configuration.Address = new Uri($"{serverOptions.Address}:{serverOptions.Port}");
+                });
+
+                writeResult = client.Agent.ServiceRegister(agentServiceRegistration).GetAwaiter().GetResult();
             }
             catch
             {
@@ -54,34 +63,27 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             }
         }
 
-        private CatalogRegistration CreateCatalogRegistration(ClientOptions clientOptions)
+        private AgentServiceRegistration CreateAgentServiceRegistration(ServiceOptions serviceOptions)
         {
             var randomNodeId = GenerateRandomNode(6);
-            var nodeId = $"{clientOptions.ServiceId} - node {randomNodeId}";
+            var serviceUniqueId = $"{serviceOptions.Id}-{randomNodeId}";
 
-            var catalogRegister = new CatalogRegistration();
-            catalogRegister.Datacenter = clientOptions.Datacenter;
-            catalogRegister.Node = nodeId;
-            catalogRegister.Address = clientOptions.AgentAddress;
+            var localAddress = string.IsNullOrWhiteSpace(serviceOptions.Address)
+                ? GetLocalAddress() : serviceOptions.Address;
+            var localPort = serviceOptions.Port;
 
-            var localAddress = string.IsNullOrWhiteSpace(clientOptions.ClientAddres) 
-                ? GetLocalAddress() : clientOptions.ClientAddres;
-            var localPort = clientOptions.ClientPort;
+            var agentServiceRegistration = new AgentServiceRegistration();
+            agentServiceRegistration.Address = localAddress;
+            agentServiceRegistration.Port = localPort;
+            agentServiceRegistration.ID = serviceUniqueId;
+            agentServiceRegistration.Name = serviceOptions.Name;
 
-            catalogRegister.Service = new AgentService();
-            catalogRegister.Service.ID = clientOptions.ServiceId;
-            catalogRegister.Service.Service = clientOptions.ServiceName;
-            catalogRegister.Service.Address = localAddress;
-            catalogRegister.Service.Port = localPort;
+            agentServiceRegistration.Check = new AgentServiceCheck();
+            agentServiceRegistration.Check.Interval = TimeSpan.FromSeconds(10);
+            agentServiceRegistration.Check.TTL = TimeSpan.FromSeconds(15);
+            agentServiceRegistration.Check.HTTP = serviceOptions.HttpHealthCheck;
 
-            catalogRegister.Check = new AgentCheck();
-            catalogRegister.Check.Node = nodeId;
-            catalogRegister.Check.CheckID = $"service:{clientOptions.ServiceId}";
-            catalogRegister.Check.Name = $"{clientOptions.ServiceName} Health Check";
-            catalogRegister.Check.Notes = "Script based health check";
-            catalogRegister.Check.Status = CheckStatus.Passing;
-            catalogRegister.Check.ServiceID = clientOptions.ServiceId;
-            return catalogRegister;
+            return agentServiceRegistration;
         }
 
         private string GetLocalAddress()
