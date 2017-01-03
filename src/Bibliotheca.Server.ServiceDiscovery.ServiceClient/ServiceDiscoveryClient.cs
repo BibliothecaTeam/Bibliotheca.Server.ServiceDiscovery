@@ -1,67 +1,49 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using Bibliotheca.Server.ServiceDiscovery.ServiceClient.Exceptions;
 using Consul;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 {
     public class ServiceDiscoveryClient : IServiceDiscoveryClient
     {
-        private const int _randomSuffixLength = 6;
-        private readonly IMemoryCache _memoryCache;
-
-        public ServiceDiscoveryClient(IMemoryCache memoryCache)
+        public void Register(ServiceDiscoveryOptions serviceDiscoveryOptions)
         {
-            _memoryCache = memoryCache;
-        }
+            ValidateOptions(serviceDiscoveryOptions);
 
-        public void Register(Action<ServiceDiscoveryOptions> actionOptions)
-        {
-            var options = new ServiceDiscoveryOptions();
-            actionOptions?.Invoke(options);
-
-            ValidateOptions(options);
-
-            var agentServiceRegistration = CreateAgentServiceRegistration(options.ServiceOptions);
+            var agentServiceRegistration = CreateAgentServiceRegistration(serviceDiscoveryOptions.ServiceOptions);
             var registerServiceEventArgument = new RegisterServiceEventArgument
             {
                 AgentServiceRegistration = agentServiceRegistration,
-                ServerOptions = options.ServerOptions
+                ServerOptions = serviceDiscoveryOptions.ServerOptions
             };
 
             RegisterService(registerServiceEventArgument);
+            var timer = new Timer((e) =>
+            {
+                RegisterService(registerServiceEventArgument);
+            }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
         }
 
         private void RegisterService(RegisterServiceEventArgument argument)
         {
-            _memoryCache.Set(argument.AgentServiceRegistration.ID, argument,
-                new MemoryCacheEntryOptions().RegisterPostEvictionCallback((key, value, reason, substate) =>
-                {
-                    if (reason == EvictionReason.Expired)
-                    {
-                        var options = value as RegisterServiceEventArgument;
-                        RegisterService(options);
-                    }
-                }).SetAbsoluteExpiration(TimeSpan.FromMinutes(1))
-            );
-
             WriteResult writeResult = null;
             try
             {
-                var client = new ConsulClient((configuration) =>
-                {
+                using (var client = new ConsulClient((configuration) => {
                     configuration.Address = new Uri(argument.ServerOptions.Address);
-                });
-
-                if (!IsServiceAlreadyRegistered(client, argument.AgentServiceRegistration.ID))
+                }))
                 {
-                    writeResult = client.Agent.ServiceRegister(argument.AgentServiceRegistration).GetAwaiter().GetResult();
-
-                    if (writeResult.StatusCode != HttpStatusCode.Created && writeResult.StatusCode != HttpStatusCode.OK)
+                    if (!IsServiceAlreadyRegistered(client, argument.AgentServiceRegistration.ID))
                     {
-                        throw new ServiceDiscoveryResponseException("Registration failed.");
+                        writeResult = client.Agent.ServiceRegister(argument.AgentServiceRegistration).GetAwaiter().GetResult();
+
+                        if (writeResult.StatusCode != HttpStatusCode.Created && writeResult.StatusCode != HttpStatusCode.OK)
+                        {
+                            throw new ServiceDiscoveryResponseException("Registration failed.");
+                        }
                     }
                 }
 
@@ -113,13 +95,10 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 
         private AgentServiceRegistration CreateAgentServiceRegistration(ServiceOptions serviceOptions)
         {
-            var randomNodeId = GenerateRandomNode(_randomSuffixLength);
-            var serviceUniqueId = $"{serviceOptions.Id}-{randomNodeId}";
-
             var agentServiceRegistration = new AgentServiceRegistration();
             agentServiceRegistration.Address = serviceOptions.Address;
             agentServiceRegistration.Port = serviceOptions.Port;
-            agentServiceRegistration.ID = serviceUniqueId;
+            agentServiceRegistration.ID = serviceOptions.Id;
             agentServiceRegistration.Name = serviceOptions.Name;
             agentServiceRegistration.Tags = serviceOptions.Tags.ToArray();
 
@@ -129,14 +108,6 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             agentServiceRegistration.Check.HTTP = serviceOptions.HttpHealthCheck;
 
             return agentServiceRegistration;
-        }
-
-        private string GenerateRandomNode(int length)
-        {
-            Random random = new Random();
-
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray());
         }
     }
 }

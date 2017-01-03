@@ -31,30 +31,30 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
         [Given("Application is registered")]
         private void GivenApplicationIsRegistered(string serviceId)
         {
-            var serviceDiscovery = new ServiceDiscoveryClient(new FakeMemoryCache());
-            serviceDiscovery.Register((options) =>
-            {
-                options.ServiceOptions.Id = serviceId;
-                options.ServiceOptions.Name = "Fake name";
-                options.ServiceOptions.Address = "127.0.0.1";
-                options.ServiceOptions.Port = 5555;
-                options.ServiceOptions.HttpHealthCheck = string.Empty;
-                options.ServiceOptions.Tags = new List<string>();
-                options.ServerOptions.Address = "http://127.0.0.1:8500";
-            });
+            var options = new ServiceDiscoveryOptions();
+            options.ServiceOptions.Id = serviceId;
+            options.ServiceOptions.Name = "Fake name";
+            options.ServiceOptions.Address = "10.1.1.0";
+            options.ServiceOptions.Port = 5555;
+            options.ServiceOptions.HttpHealthCheck = string.Empty;
+            options.ServiceOptions.Tags = new List<string>();
+            options.ServerOptions.Address = "http://127.0.0.1:8500";
+
+            var serviceDiscovery = new ServiceDiscoveryClient();
+            serviceDiscovery.Register(options);
         }
 
         [When("User get information about registered services")]
         private async Task WhenUserGetInformationAboutRegisteredServices()
         {
             var serviceQuery = new ServiceDiscoveryQuery();
-            _services = await serviceQuery.GetServices((o) => o.Address = "http://127.0.0.1:8500");
+            _services = await serviceQuery.GetServices(new ServerOptions { Address = "http://127.0.0.1:8500" });
         }
 
         [Then("Application with id exists on list")]
         private void ThenApplicationWithIdExistsOnList(string serviceId)
         {
-            Assert.True(_services.Any(x => x.ID.StartsWith(serviceId)));
+            Assert.True(_services.Any(x => x.ID == serviceId));
         }
     }
 }

@@ -11,13 +11,8 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 {
     public class ServiceDiscoveryQuery : IServiceDiscoveryQuery
     {
-        private const int _randomSuffixLength = 7;
-
-        public async Task<IList<ServiceInformation>> GetServices(Action<ServerOptions> actionOptions)
+        public async Task<IList<ServiceInformation>> GetServices(ServerOptions serverOptions)
         {
-            var serverOptions = new ServerOptions();
-            actionOptions?.Invoke(serverOptions);
-
             var client = new ConsulClient((options) =>
             {
                 options.Address = new Uri(serverOptions.Address);
@@ -32,16 +27,15 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             return services.Response.Select(x => MapToServiceInformation(x.Value)).ToList();
         }
 
-        public async Task<IList<ServiceInformation>> GetServices(Action<ServerOptions> actionOptions, string serviceId)
+        public async Task<ServiceInformation> GetService(ServerOptions serverOptions, string serviceId)
         {
-            int idLength = serviceId.Length + _randomSuffixLength;
-            var services = await GetServices(actionOptions);
-            return services.Where(x => x.ID.Length == idLength && x.ID.StartsWith(serviceId)).ToList();
+            var services = await GetServices(serverOptions);
+            return services.FirstOrDefault(x => x.ID == serviceId);
         }
 
-        public async Task<IList<ServiceInformation>> GetServices(Action<ServerOptions> actionOptions, string[] tags)
+        public async Task<IList<ServiceInformation>> GetServices(ServerOptions serverOptions, string[] tags)
         {
-            var services = await GetServices(actionOptions);
+            var services = await GetServices(serverOptions);
             return services.Where(x => x.Tags.Intersect(tags).Any()).ToList();
         }
 

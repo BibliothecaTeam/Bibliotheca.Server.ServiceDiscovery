@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Xunit;
 using Consul;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementations
 {
@@ -31,17 +32,17 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
         {
             try
             {
-                var serviceDiscovery = new ServiceDiscoveryClient(new FakeMemoryCache());
-                serviceDiscovery.Register((options) => 
-                {
-                    options.ServiceOptions.Id = serviceId;
-                    options.ServiceOptions.Name = "Fake name";
-                    options.ServiceOptions.Address = serviceAddress;
-                    options.ServiceOptions.Port = 5555;
-                    options.ServiceOptions.HttpHealthCheck = string.Empty;
-                    options.ServiceOptions.Tags = new List<string>();
-                    options.ServerOptions.Address = "http://127.0.0.1:8500";
-                });
+                var options = new ServiceDiscoveryOptions();
+                options.ServiceOptions.Id = serviceId;
+                options.ServiceOptions.Name = "Fake name";
+                options.ServiceOptions.Address = serviceAddress;
+                options.ServiceOptions.Port = 5555;
+                options.ServiceOptions.HttpHealthCheck = string.Empty;
+                options.ServiceOptions.Tags = new List<string>();
+                options.ServerOptions.Address = "http://127.0.0.1:8500";
+
+                var serviceDiscovery = new ServiceDiscoveryClient();
+                serviceDiscovery.Register(options);
 
                 _result = true;
             }
@@ -63,14 +64,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
             var client = new ConsulClient();
             var services = await client.Agent.Services();
 
-            AgentService agentService = null;
-            foreach(var item in services.Response)
-            {
-                if(item.Value.ID.StartsWith($"{serviceId}-"))
-                {
-                    agentService = item.Value;
-                }
-            }
+            AgentService agentService = services.Response.Values.FirstOrDefault(x => x.ID == serviceId);
 
             Assert.NotNull(agentService);
             Assert.Equal(serviceAddress, agentService.Address);

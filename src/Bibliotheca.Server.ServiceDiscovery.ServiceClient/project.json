@@ -1,5 +1,5 @@
 {
-  "version": "1.0.6",
+  "version": "1.0.7",
   "authors": [
     "@mczachurski"
   ],
@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "Microsoft.AspNetCore.Mvc": "1.1.0",
-    "Microsoft.Extensions.Caching.Memory": "1.1.0",
     "Microsoft.Extensions.DependencyInjection": "1.1.0",
     "Consul": "0.7.0.5"
   },

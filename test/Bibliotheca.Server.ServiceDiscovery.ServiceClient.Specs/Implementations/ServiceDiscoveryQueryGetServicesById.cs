@@ -10,18 +10,18 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
     [Feature("ServiceDiscoveryQueryGetServicesById", "Getting service by id have to return correct information about services")]
     public class ServiceDiscoveryQueryGetServicesById
     {
-        private IList<ServiceInformation> _services;
+        private ServiceInformation _service;
 
         [Scenario("Service discovery application should return information about registered services when get service by Id")]
         public async Task ServiceDiscoveryApplicationShouldReturnInformationAboutRegisteredServicesWhenGetServiceById()
         {
             GivenServiceDiscoveryApplicationIsUpAndRunning();
             GivenApplicationIsRegistered("fake-getbyids-id1");
-            GivenApplicationIsRegistered("fake-getbyids-id1");
             GivenApplicationIsRegistered("fake-getbyids-id2");
             GivenApplicationIsRegistered("fake-getbyids-id3");
+            GivenApplicationIsRegistered("fake-getbyids-id4");
             await WhenUserGetInformationAboutService("fake-getbyids-id1");
-            ThenTwoApplicationsWithPrefixIdShouldBeReturned("fake-getbyids-id1");
+            ThenApplicationWithIdShouldBeReturned("fake-getbyids-id1");
         }
 
         [Given("Service discovery application is up and running")]
@@ -32,31 +32,30 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
         [Given("Application is registered")]
         private void GivenApplicationIsRegistered(string serviceId)
         {
-            var serviceDiscovery = new ServiceDiscoveryClient(new FakeMemoryCache());
-            serviceDiscovery.Register((options) =>
-            {
+                var options = new ServiceDiscoveryOptions();
                 options.ServiceOptions.Id = serviceId;
                 options.ServiceOptions.Name = "Fake name";
-                options.ServiceOptions.Address = "127.0.0.1";
+                options.ServiceOptions.Address = "10.1.1.1";
                 options.ServiceOptions.Port = 5555;
                 options.ServiceOptions.HttpHealthCheck = string.Empty;
                 options.ServiceOptions.Tags = new List<string>();
                 options.ServerOptions.Address = "http://127.0.0.1:8500";
-            });
+
+                var serviceDiscovery = new ServiceDiscoveryClient();
+                serviceDiscovery.Register(options);
         }
 
         [When("User get information about service")]
         private async Task WhenUserGetInformationAboutService(string serviceId)
         {
             var serviceQuery = new ServiceDiscoveryQuery();
-            _services = await serviceQuery.GetServices((o) => o.Address = "http://127.0.0.1:8500", serviceId);
+            _service = await serviceQuery.GetService(new ServerOptions { Address = "http://127.0.0.1:8500" }, serviceId);
         }
 
-        [Then("Two applications with prefix id should be returned")]
-        private void ThenTwoApplicationsWithPrefixIdShouldBeReturned(string serviceId)
+        [Then("Application with id should be returned")]
+        private void ThenApplicationWithIdShouldBeReturned(string serviceId)
         {
-            Assert.Equal(2, _services.Count);
-            Assert.True(_services.Any(x => x.ID.StartsWith(serviceId)));
+            Assert.Equal(serviceId, _service.ID);
         }
     }
 }
