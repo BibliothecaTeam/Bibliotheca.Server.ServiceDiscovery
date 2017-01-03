@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Bibliotheca.Server.ServiceDiscovery.ServiceClient.Model;
 using Xunit;
 using System.Threading.Tasks;
-using System.Linq;
 
 namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementations
 {
@@ -41,7 +40,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
                 options.ServiceOptions.Tags = new List<string>();
                 options.ServerOptions.Address = "http://127.0.0.1:8500";
 
-                var serviceDiscovery = new ServiceDiscoveryClient();
+                var serviceDiscovery = new ServiceDiscoveryClient(null);
                 serviceDiscovery.Register(options);
         }
 

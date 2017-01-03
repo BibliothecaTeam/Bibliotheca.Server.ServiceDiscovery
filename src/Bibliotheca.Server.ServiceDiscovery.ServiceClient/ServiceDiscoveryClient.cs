@@ -4,11 +4,19 @@ using System.Net;
 using System.Threading;
 using Bibliotheca.Server.ServiceDiscovery.ServiceClient.Exceptions;
 using Consul;
+using Microsoft.Extensions.Logging;
 
 namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 {
     public class ServiceDiscoveryClient : IServiceDiscoveryClient
     {
+        private readonly ILogger _logger;
+
+        public ServiceDiscoveryClient(ILoggerFactory loggerFactory)
+        {
+            _logger = loggerFactory?.CreateLogger<ServiceDiscoveryClient>();
+        }
+
         public void Register(ServiceDiscoveryOptions serviceDiscoveryOptions)
         {
             ValidateOptions(serviceDiscoveryOptions);
@@ -29,7 +37,6 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 
         private void RegisterService(RegisterServiceEventArgument argument)
         {
-            WriteResult writeResult = null;
             try
             {
                 using (var client = new ConsulClient((configuration) => {
@@ -38,9 +45,9 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
                 {
                     if (!IsServiceAlreadyRegistered(client, argument.AgentServiceRegistration.ID))
                     {
-                        writeResult = client.Agent.ServiceRegister(argument.AgentServiceRegistration).GetAwaiter().GetResult();
+                        var writeResult = client.Agent.ServiceRegister(argument.AgentServiceRegistration).GetAwaiter().GetResult();
 
-                        if (writeResult.StatusCode != HttpStatusCode.Created && writeResult.StatusCode != HttpStatusCode.OK)
+                        if (!RegistrationWasSuccessfull(writeResult))
                         {
                             throw new ServiceDiscoveryResponseException("Registration failed.");
                         }
@@ -50,8 +57,14 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             }
             catch (Exception exception)
             {
-                throw new ServiceDiscoveryRegistrationException($"Exception during registration node: {exception.Message}");
+                _logger?.LogWarning("Service discovery server is not running.");
+                _logger?.LogWarning($"Exception ({exception.GetType()}): {exception.Message}");
             }
+        }
+
+        private static bool RegistrationWasSuccessfull(WriteResult writeResult)
+        {
+            return writeResult.StatusCode == HttpStatusCode.Created || writeResult.StatusCode == HttpStatusCode.OK;
         }
 
         private bool IsServiceAlreadyRegistered(ConsulClient client, string serviceId)
