@@ -33,6 +33,21 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             return services.FirstOrDefault(x => x.ID == serviceId);
         }
 
+        public async Task<ServiceInformation> GetService(ServerOptions serverOptions, string[] tags)
+        {
+            var allServices = await GetServices(serverOptions);
+            var services = allServices.Where(x => x.Tags.Intersect(tags).Any()).ToList();
+
+            if(services.Count == 0)
+            {
+                return null;
+            }
+
+            var random = new Random();
+            var index = random.Next(0, services.Count - 1);
+            return services[index];
+        }
+
         public async Task<IList<ServiceInformation>> GetServices(ServerOptions serverOptions, string[] tags)
         {
             var services = await GetServices(serverOptions);

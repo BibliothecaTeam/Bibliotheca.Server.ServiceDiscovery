@@ -7,12 +7,12 @@ using System.Linq;
 
 namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementations
 {
-    [Feature("ServiceDiscoveryQueryGetServicesByTags", "Getting service by tags have to return correct information about services")]
-    public class ServiceDiscoveryQueryGetServicesByTags
+    [Feature("ServiceDiscoveryQueryGetServiceByTags", "Getting service by tags have to return correct information about service")]
+    public class ServiceDiscoveryQueryGetServiceByTags
     {
         private IList<ServiceInformation> _services;
 
-        [Scenario("Service discovery application should return information about registered services when user get service by tag")]
+        [Scenario("Service discovery application should return information about registered service when user get service by tag")]
         public async Task ServiceDiscoveryApplicationShouldReturnInformationAboutRegisteredServicesWhenUserGetServiceByTag()
         {
             GivenServiceDiscoveryApplicationIsUpAndRunning();
@@ -21,8 +21,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
             GivenApplicationIsRegisteredWithTag("fake-getbytag-id3", "tag2");
             GivenApplicationIsRegisteredWithTag("fake-getbytag-id4", "tag3");
             await WhenUserGetInformationAboutServicesWithTag("tag1");
-            ThenApplicationWithIdExistsOnList("fake-getbytag-id1");
-            ThenApplicationWithIdExistsOnList("fake-getbytag-id2");
+            ThenApplicationWithIdWasReturned("fake-getbytag-id1", "fake-getbytag-id2");
         }
 
         [Given("Service discovery application is up and running")]
@@ -53,10 +52,10 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
             _services = await serviceQuery.GetServices(new ServerOptions { Address = "http://127.0.0.1:8500" }, new string[] { tag });
         }
 
-        [Then("Application with id exists on list")]
-        private void ThenApplicationWithIdExistsOnList(string serviceId)
+        [Then("Application with id was returned")]
+        private void ThenApplicationWithIdWasReturned(string serviceId1, string serviceId2)
         {
-            Assert.True(_services.Any(x => x.ID == serviceId));
+            Assert.True(_services.Any(x => x.ID == serviceId1 || x.ID == serviceId2));
         }
     }
 }

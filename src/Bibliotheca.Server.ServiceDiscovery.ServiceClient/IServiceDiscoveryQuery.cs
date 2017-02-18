@@ -10,6 +10,8 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
         
         Task<ServiceInformation> GetService(ServerOptions serverOptions, string serviceId);
 
+        Task<ServiceInformation> GetService(ServerOptions serverOptions, string[] tags);
+
         Task<IList<ServiceInformation>> GetServices(ServerOptions serverOptions, string[] tags);
     }
 }

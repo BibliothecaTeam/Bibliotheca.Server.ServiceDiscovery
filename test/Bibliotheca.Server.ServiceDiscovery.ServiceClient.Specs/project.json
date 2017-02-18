@@ -12,7 +12,7 @@
     "dotnet-test-xunit": "2.2.0-preview2-build1029",
     "FluentBehave": "1.0.0-beta9",
     "Consul": "0.7.0.5",
-    "Bibliotheca.Server.ServiceDiscovery.ServiceClient": "1.0.8"
+    "Bibliotheca.Server.ServiceDiscovery.ServiceClient": "1.0.9"
   },
   "testRunner": "xunit",
   "frameworks": {
