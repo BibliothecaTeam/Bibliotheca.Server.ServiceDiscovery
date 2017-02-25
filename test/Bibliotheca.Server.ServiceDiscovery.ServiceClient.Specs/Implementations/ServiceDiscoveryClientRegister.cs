@@ -17,7 +17,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
         public async Task ClientShouldBeSuccessfullyRegisteredWhenISpecifyCorrectOptions()
         {
             GivenServiceDiscoveryApplicationIsUpAndRunning();
-            WhenUserRegisterApplicationWithIdAndAddress("fake-app-id", "10.1.1.2");
+            await WhenUserRegisterApplicationWithIdAndAddress("fake-app-id", "10.1.1.2");
             ThenDiscoveryServiceApplicationReturnsStatusCodeOk();
             await ThenApplicationWithIdAndAddressIsSuccessfullyRegistered("fake-app-id", "10.1.1.2");
         }
@@ -28,7 +28,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
         }
 
         [When("User register application with id and address")]
-        private void WhenUserRegisterApplicationWithIdAndAddress(string serviceId, string serviceAddress)
+        private async Task WhenUserRegisterApplicationWithIdAndAddress(string serviceId, string serviceAddress)
         {
             try
             {
@@ -42,7 +42,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
                 options.ServerOptions.Address = "http://127.0.0.1:8500";
 
                 var serviceDiscovery = new ServiceDiscoveryClient(null);
-                serviceDiscovery.Register(options);
+                await serviceDiscovery.RegisterAsync(options);
 
                 _result = true;
             }

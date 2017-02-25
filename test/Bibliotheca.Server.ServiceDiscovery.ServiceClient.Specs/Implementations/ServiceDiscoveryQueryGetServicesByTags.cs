@@ -16,10 +16,10 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
         public async Task ServiceDiscoveryApplicationShouldReturnInformationAboutRegisteredServicesWhenUserGetServiceByTag()
         {
             GivenServiceDiscoveryApplicationIsUpAndRunning();
-            GivenApplicationIsRegisteredWithTag("fake-getbytag-id1", "tag1");
-            GivenApplicationIsRegisteredWithTag("fake-getbytag-id2", "tag1");
-            GivenApplicationIsRegisteredWithTag("fake-getbytag-id3", "tag2");
-            GivenApplicationIsRegisteredWithTag("fake-getbytag-id4", "tag3");
+            await GivenApplicationIsRegisteredWithTag("fake-getbytag-id1", "tag1");
+            await GivenApplicationIsRegisteredWithTag("fake-getbytag-id2", "tag1");
+            await GivenApplicationIsRegisteredWithTag("fake-getbytag-id3", "tag2");
+            await GivenApplicationIsRegisteredWithTag("fake-getbytag-id4", "tag3");
             await WhenUserGetInformationAboutServicesWithTag("tag1");
             ThenApplicationWithIdExistsOnList("fake-getbytag-id1");
             ThenApplicationWithIdExistsOnList("fake-getbytag-id2");
@@ -31,7 +31,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
         }
 
         [Given("Application is registered with tag")]
-        private void GivenApplicationIsRegisteredWithTag(string serviceId, string tag)
+        private async Task GivenApplicationIsRegisteredWithTag(string serviceId, string tag)
         {
             var options = new ServiceDiscoveryOptions();
             options.ServiceOptions.Id = serviceId;
@@ -43,14 +43,14 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
             options.ServerOptions.Address = "http://127.0.0.1:8500";
 
             var serviceDiscovery = new ServiceDiscoveryClient(null);
-            serviceDiscovery.Register(options);
+            await serviceDiscovery.RegisterAsync(options);
         }
 
         [When("User get information about services with tag")]
         private async Task WhenUserGetInformationAboutServicesWithTag(string tag)
         {
             var serviceQuery = new ServiceDiscoveryQuery();
-            _services = await serviceQuery.GetServices(new ServerOptions { Address = "http://127.0.0.1:8500" }, new string[] { tag });
+            _services = await serviceQuery.GetServicesAsync(new ServerOptions { Address = "http://127.0.0.1:8500" }, new string[] { tag });
         }
 
         [Then("Application with id exists on list")]

@@ -15,10 +15,10 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
         public async Task ServiceDiscoveryApplicationShouldReturnInformationAboutRegisteredServicesWhenGetServiceById()
         {
             GivenServiceDiscoveryApplicationIsUpAndRunning();
-            GivenApplicationIsRegistered("fake-getbyids-id1");
-            GivenApplicationIsRegistered("fake-getbyids-id2");
-            GivenApplicationIsRegistered("fake-getbyids-id3");
-            GivenApplicationIsRegistered("fake-getbyids-id4");
+            await GivenApplicationIsRegistered("fake-getbyids-id1");
+            await GivenApplicationIsRegistered("fake-getbyids-id2");
+            await GivenApplicationIsRegistered("fake-getbyids-id3");
+            await GivenApplicationIsRegistered("fake-getbyids-id4");
             await WhenUserGetInformationAboutService("fake-getbyids-id1");
             ThenApplicationWithIdShouldBeReturned("fake-getbyids-id1");
         }
@@ -29,7 +29,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
         }
 
         [Given("Application is registered")]
-        private void GivenApplicationIsRegistered(string serviceId)
+        private async Task GivenApplicationIsRegistered(string serviceId)
         {
                 var options = new ServiceDiscoveryOptions();
                 options.ServiceOptions.Id = serviceId;
@@ -41,14 +41,14 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
                 options.ServerOptions.Address = "http://127.0.0.1:8500";
 
                 var serviceDiscovery = new ServiceDiscoveryClient(null);
-                serviceDiscovery.Register(options);
+                await serviceDiscovery.RegisterAsync(options);
         }
 
         [When("User get information about service")]
         private async Task WhenUserGetInformationAboutService(string serviceId)
         {
             var serviceQuery = new ServiceDiscoveryQuery();
-            _service = await serviceQuery.GetService(new ServerOptions { Address = "http://127.0.0.1:8500" }, serviceId);
+            _service = await serviceQuery.GetServiceAsync(new ServerOptions { Address = "http://127.0.0.1:8500" }, serviceId);
         }
 
         [Then("Application with id should be returned")]

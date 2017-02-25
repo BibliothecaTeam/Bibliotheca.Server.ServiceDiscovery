@@ -6,12 +6,12 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 {
     public interface IServiceDiscoveryQuery
     {
-        Task<IList<ServiceInformation>> GetServices(ServerOptions serverOptions);
+        Task<IList<ServiceInformation>> GetServicesAsync(ServerOptions serverOptions);
         
-        Task<ServiceInformation> GetService(ServerOptions serverOptions, string serviceId);
+        Task<ServiceInformation> GetServiceAsync(ServerOptions serverOptions, string serviceId);
 
-        Task<ServiceInformation> GetService(ServerOptions serverOptions, string[] tags);
+        Task<ServiceInformation> GetServiceAsync(ServerOptions serverOptions, string[] tags);
 
-        Task<IList<ServiceInformation>> GetServices(ServerOptions serverOptions, string[] tags);
+        Task<IList<ServiceInformation>> GetServicesAsync(ServerOptions serverOptions, string[] tags);
     }
 }

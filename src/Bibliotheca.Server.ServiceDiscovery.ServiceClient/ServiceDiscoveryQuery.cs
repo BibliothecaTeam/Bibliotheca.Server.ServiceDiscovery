@@ -11,7 +11,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 {
     public class ServiceDiscoveryQuery : IServiceDiscoveryQuery
     {
-        public async Task<IList<ServiceInformation>> GetServices(ServerOptions serverOptions)
+        public async Task<IList<ServiceInformation>> GetServicesAsync(ServerOptions serverOptions)
         {
             var client = new ConsulClient((options) =>
             {
@@ -27,15 +27,15 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             return services.Response.Select(x => MapToServiceInformation(x.Value)).ToList();
         }
 
-        public async Task<ServiceInformation> GetService(ServerOptions serverOptions, string serviceId)
+        public async Task<ServiceInformation> GetServiceAsync(ServerOptions serverOptions, string serviceId)
         {
-            var services = await GetServices(serverOptions);
+            var services = await GetServicesAsync(serverOptions);
             return services.FirstOrDefault(x => x.ID == serviceId);
         }
 
-        public async Task<ServiceInformation> GetService(ServerOptions serverOptions, string[] tags)
+        public async Task<ServiceInformation> GetServiceAsync(ServerOptions serverOptions, string[] tags)
         {
-            var allServices = await GetServices(serverOptions);
+            var allServices = await GetServicesAsync(serverOptions);
             var services = allServices.Where(x => x.Tags.Intersect(tags).Any()).ToList();
 
             if(services.Count == 0)
@@ -48,9 +48,9 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             return services[index];
         }
 
-        public async Task<IList<ServiceInformation>> GetServices(ServerOptions serverOptions, string[] tags)
+        public async Task<IList<ServiceInformation>> GetServicesAsync(ServerOptions serverOptions, string[] tags)
         {
-            var services = await GetServices(serverOptions);
+            var services = await GetServicesAsync(serverOptions);
             return services.Where(x => x.Tags.Intersect(tags).Any()).ToList();
         }
 

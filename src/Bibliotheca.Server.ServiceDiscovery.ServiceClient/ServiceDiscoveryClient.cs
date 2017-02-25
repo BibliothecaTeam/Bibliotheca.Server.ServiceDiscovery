@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using Bibliotheca.Server.ServiceDiscovery.ServiceClient.Exceptions;
 using Consul;
 using Microsoft.Extensions.Logging;
@@ -16,7 +17,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             _logger = loggerFactory?.CreateLogger<ServiceDiscoveryClient>();
         }
 
-        public void Register(ServiceDiscoveryOptions serviceDiscoveryOptions)
+        public async Task RegisterAsync(ServiceDiscoveryOptions serviceDiscoveryOptions)
         {
             ValidateOptions(serviceDiscoveryOptions);
 
@@ -27,10 +28,10 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
                 ServerOptions = serviceDiscoveryOptions.ServerOptions
             };
 
-            RegisterService(registerServiceEventArgument);
+            await RegisterService(registerServiceEventArgument);
         }
 
-        private void RegisterService(RegisterServiceEventArgument argument)
+        private async Task RegisterService(RegisterServiceEventArgument argument)
         {
             try
             {
@@ -40,10 +41,11 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
                     configuration.Address = new Uri(argument.ServerOptions.Address);
                 }))
                 {
-                    if (!IsServiceAlreadyRegistered(client, argument.AgentServiceRegistration.ID))
+                    bool isAlreadyRegistered = await IsServiceAlreadyRegisteredAsync(client, argument.AgentServiceRegistration.ID);
+                    if (!isAlreadyRegistered)
                     {
                         _logger?.LogInformation($"Sending information about service to service discovery application [address: {argument.AgentServiceRegistration.Address}, port: {argument.AgentServiceRegistration.Port}]...");
-                        var writeResult = client.Agent.ServiceRegister(argument.AgentServiceRegistration).GetAwaiter().GetResult();
+                        var writeResult = await client.Agent.ServiceRegister(argument.AgentServiceRegistration);
 
                         if (!RegistrationWasSuccessfull(writeResult))
                         {
@@ -72,9 +74,9 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             return writeResult.StatusCode == HttpStatusCode.Created || writeResult.StatusCode == HttpStatusCode.OK;
         }
 
-        private bool IsServiceAlreadyRegistered(ConsulClient client, string serviceId)
+        private async Task<bool> IsServiceAlreadyRegisteredAsync(ConsulClient client, string serviceId)
         {
-            var services = client.Agent.Services().GetAwaiter().GetResult();
+            var services = await client.Agent.Services();
             if (services.Response.Any(x => x.Value.ID == serviceId))
             {
                 _logger?.LogInformation("Service is already registered in service discovery application.");

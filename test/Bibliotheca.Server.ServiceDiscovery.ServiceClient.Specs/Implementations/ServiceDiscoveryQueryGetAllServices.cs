@@ -16,8 +16,8 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
         public async Task ServiceDiscoveryApplicationShouldReturnInformationAboutRegisteredServicesWhenUserGetAllServices()
         {
             GivenServiceDiscoveryApplicationIsUpAndRunning();
-            GivenApplicationIsRegistered("fake-getall-id1");
-            GivenApplicationIsRegistered("fake-getall-id2");
+            await GivenApplicationIsRegistered("fake-getall-id1");
+            await GivenApplicationIsRegistered("fake-getall-id2");
             await WhenUserGetInformationAboutRegisteredServices();
             ThenApplicationWithIdExistsOnList("fake-getall-id1");
             ThenApplicationWithIdExistsOnList("fake-getall-id2");
@@ -29,7 +29,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
         }
 
         [Given("Application is registered")]
-        private void GivenApplicationIsRegistered(string serviceId)
+        private async Task GivenApplicationIsRegistered(string serviceId)
         {
             var options = new ServiceDiscoveryOptions();
             options.ServiceOptions.Id = serviceId;
@@ -41,14 +41,14 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
             options.ServerOptions.Address = "http://127.0.0.1:8500";
 
             var serviceDiscovery = new ServiceDiscoveryClient(null);
-            serviceDiscovery.Register(options);
+            await serviceDiscovery.RegisterAsync(options);
         }
 
         [When("User get information about registered services")]
         private async Task WhenUserGetInformationAboutRegisteredServices()
         {
             var serviceQuery = new ServiceDiscoveryQuery();
-            _services = await serviceQuery.GetServices(new ServerOptions { Address = "http://127.0.0.1:8500" });
+            _services = await serviceQuery.GetServicesAsync(new ServerOptions { Address = "http://127.0.0.1:8500" });
         }
 
         [Then("Application with id exists on list")]

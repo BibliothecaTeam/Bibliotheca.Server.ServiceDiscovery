@@ -7,8 +7,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Extensions
         public static void RegisterService(this IApplicationBuilder applicationBuilder, ServiceDiscoveryOptions serviceDiscoveryOptions)
         {
             var service = applicationBuilder.ApplicationServices.GetService(typeof(IServiceDiscoveryClient)) as IServiceDiscoveryClient;
-
-            service.Register(serviceDiscoveryOptions);
+            service.RegisterAsync(serviceDiscoveryOptions).GetAwaiter().GetResult();
         }
     }
 }

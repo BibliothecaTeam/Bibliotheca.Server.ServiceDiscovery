@@ -1,7 +1,9 @@
+using System.Threading.Tasks;
+
 namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 {
     public interface IServiceDiscoveryClient
     {
-        void Register(ServiceDiscoveryOptions options);
+        Task RegisterAsync(ServiceDiscoveryOptions options);
     }
 }
