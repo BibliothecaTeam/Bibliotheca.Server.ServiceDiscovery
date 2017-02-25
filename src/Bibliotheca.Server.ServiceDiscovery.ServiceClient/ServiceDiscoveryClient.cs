@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Net;
-using System.Threading;
 using Bibliotheca.Server.ServiceDiscovery.ServiceClient.Exceptions;
 using Consul;
 using Microsoft.Extensions.Logging;
@@ -29,10 +28,6 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             };
 
             RegisterService(registerServiceEventArgument);
-            var timer = new Timer((e) =>
-            {
-                RegisterService(registerServiceEventArgument);
-            }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
         }
 
         private void RegisterService(RegisterServiceEventArgument argument)
