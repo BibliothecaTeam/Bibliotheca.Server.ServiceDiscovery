@@ -39,25 +39,35 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
         {
             try
             {
+                _logger?.LogInformation("Registering service in service discovery application...");
+
                 using (var client = new ConsulClient((configuration) => {
                     configuration.Address = new Uri(argument.ServerOptions.Address);
                 }))
                 {
                     if (!IsServiceAlreadyRegistered(client, argument.AgentServiceRegistration.ID))
                     {
+                        _logger?.LogInformation($"Sending information about service to service discovery application [address: {argument.AgentServiceRegistration.Address}, port: {argument.AgentServiceRegistration.Port}]...");
                         var writeResult = client.Agent.ServiceRegister(argument.AgentServiceRegistration).GetAwaiter().GetResult();
 
                         if (!RegistrationWasSuccessfull(writeResult))
                         {
-                            throw new ServiceDiscoveryResponseException("Registration failed.");
+                            throw new ServiceDiscoveryResponseException("Registration in service discovery application failed.");
                         }
+
+                        _logger?.LogInformation("Registration in service discovery application complete.");
                     }
                 }
 
             }
+            catch (ServiceDiscoveryResponseException exception)
+            {
+                _logger?.LogWarning("Service discovery application is not running.");
+                _logger?.LogWarning($"Exception ({exception.GetType()}): {exception.Message}");
+            }
             catch (Exception exception)
             {
-                _logger?.LogWarning("Service discovery server is not running.");
+                _logger?.LogWarning("Unexpected exception from service discovery application.");
                 _logger?.LogWarning($"Exception ({exception.GetType()}): {exception.Message}");
             }
         }
@@ -72,9 +82,11 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             var services = client.Agent.Services().GetAwaiter().GetResult();
             if (services.Response.Any(x => x.Value.ID == serviceId))
             {
+                _logger?.LogInformation("Service is already registered in service discovery application.");
                 return true;
             }
 
+            _logger?.LogInformation("Service is not registered in service discovery application.");
             return false;
         }
 
