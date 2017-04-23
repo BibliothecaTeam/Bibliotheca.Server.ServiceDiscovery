@@ -13,5 +13,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
         Task<ServiceInformation> GetServiceAsync(ServerOptions serverOptions, string[] tags);
 
         Task<IList<ServiceInformation>> GetServicesAsync(ServerOptions serverOptions, string[] tags);
+
+        Task<IList<ServiceHealth>> GetServicesHealthAsync(ServerOptions serverOptions, string serviceName);
     }
 }

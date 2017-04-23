@@ -54,6 +54,40 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             return services.Where(x => x.Tags.Intersect(tags).Any()).ToList();
         }
 
+        public async Task<IList<ServiceHealth>> GetServicesHealthAsync(ServerOptions serverOptions, string serviceName)
+        {
+            var client = new ConsulClient((options) =>
+            {
+                options.Address = new Uri(serverOptions.Address);
+            });
+
+            var servicesHealth = await client.Health.Service(serviceName);
+            if(servicesHealth.StatusCode != HttpStatusCode.OK)
+            {
+                throw new ServiceDiscoveryResponseException("Exception during request to service discovery.");
+            }
+
+            var healthDtos = new List<ServiceHealth>();
+            foreach(var node in servicesHealth.Response)
+            {
+                if(node.Checks == null)
+                {
+                    continue;
+                }
+
+                foreach(var check in node.Checks)
+                {
+                    if(check.ServiceName == serviceName)
+                    {
+                        var serviceHealth = MapToServiceHealth(check);
+                        healthDtos.Add(serviceHealth);
+                    }
+                }
+            }
+
+            return healthDtos;
+        }
+
         private ServiceInformation MapToServiceInformation(AgentService agentService)
         {
             return new ServiceInformation
@@ -64,6 +98,21 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
                 Port = agentService.Port,
                 Service = agentService.Service,
                 Tags = agentService.Tags
+            };
+        }
+
+        private ServiceHealth MapToServiceHealth(HealthCheck healthCheck)
+        {
+            return new ServiceHealth
+            {
+                Node = healthCheck.Node,
+                CheckID = healthCheck.CheckID,
+                Name = healthCheck.Name,
+                Status = healthCheck.Status,
+                Notes = healthCheck.Notes,
+                Output = healthCheck.Output,
+                ServiceID = healthCheck.ServiceID,
+                ServiceName = healthCheck.ServiceName
             };
         }
     }

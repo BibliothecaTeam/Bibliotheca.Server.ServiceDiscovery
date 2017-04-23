@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Library with helper class for registration Bibliotheca microservices in service discovery.</Description>
+    <AssemblyTitle>Bibliotheca.Server.ServiceDiscovery.ServiceClient</AssemblyTitle>
+    <NeutralLanguage>C#</NeutralLanguage>
+    <VersionPrefix>1.0.13</VersionPrefix>
+    <Authors>@mczachurski</Authors>
+    <TargetFramework>netstandard1.6</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DebugType>portable</DebugType>
+    <AssemblyName>Bibliotheca.Server.ServiceDiscovery.ServiceClient</AssemblyName>
+    <PackageId>Bibliotheca.Server.ServiceDiscovery.ServiceClient</PackageId>
+    <PackageProjectUrl>https://github.com/mczachurski/Bibliotheca.Server.ServiceDiscovery</PackageProjectUrl>
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="1.1.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="1.1.0" />
+    <PackageReference Include="Consul" Version="0.7.0.5" />
+  </ItemGroup>
+
+</Project>

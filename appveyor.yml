@@ -35,7 +35,8 @@ configuration: Debug
 build: off
 
 before_build:
-  - appveyor-retry dotnet restore -v Minimal
+  - appveyor-retry dotnet restore "src\Bibliotheca.Server.ServiceDiscovery.ServiceClient" -v Minimal
+  - appveyor-retry dotnet restore "test\Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs" -v Minimal
 
 build_script:
   - dotnet build "src\Bibliotheca.Server.ServiceDiscovery.ServiceClient" -c %CONFIGURATION%
