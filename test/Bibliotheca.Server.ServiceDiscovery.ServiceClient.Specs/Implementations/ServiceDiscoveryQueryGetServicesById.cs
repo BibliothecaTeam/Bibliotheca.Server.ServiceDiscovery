@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using Bibliotheca.Server.ServiceDiscovery.ServiceClient.Model;
 using Xunit;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementations
 {
     [Feature("ServiceDiscoveryQueryGetServicesById", "Getting service by id have to return correct information about services")]
     public class ServiceDiscoveryQueryGetServicesById
     {
-        private ServiceInformation _service;
+        private IList<ServiceDto> _services;
 
         [Scenario("Service discovery application should return information about registered services when get service by Id")]
         public async Task ServiceDiscoveryApplicationShouldReturnInformationAboutRegisteredServicesWhenGetServiceById()
@@ -45,16 +46,16 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
         }
 
         [When("User get information about service")]
-        private async Task WhenUserGetInformationAboutService(string serviceId)
+        private async Task WhenUserGetInformationAboutService(string serviceName)
         {
             var serviceQuery = new ServiceDiscoveryQuery();
-            _service = await serviceQuery.GetServiceAsync(new ServerOptions { Address = "http://127.0.0.1:8500" }, serviceId);
+            _services = await serviceQuery.GetServicesAsync(new ServerOptions { Address = "http://127.0.0.1:8500" }, serviceName);
         }
 
         [Then("Application with id should be returned")]
         private void ThenApplicationWithIdShouldBeReturned(string serviceId)
         {
-            Assert.Equal(serviceId, _service.ID);
+            Assert.True(_services.SelectMany(x => x.Instances).Any(y => y.Id == serviceId));
         }
     }
 }

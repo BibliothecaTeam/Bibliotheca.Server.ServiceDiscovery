@@ -1,6 +1,6 @@
 namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Model
 {
-    public class ServiceInformation
+    public class ServiceInformationDto
     {
         public string Address { get; set; }
 

@@ -10,7 +10,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
     [Feature("ServiceDiscoveryQueryGetAllServices", "Getting all services from service discovery application")]
     public class ServiceDiscoveryQueryGetAllServices
     {
-        private IList<ServiceInformation> _services;
+        private IList<ServiceDto> _services;
 
         [Scenario("Service discovery application should return information about registered services when user get all services")]
         public async Task ServiceDiscoveryApplicationShouldReturnInformationAboutRegisteredServicesWhenUserGetAllServices()
@@ -54,7 +54,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
         [Then("Application with id exists on list")]
         private void ThenApplicationWithIdExistsOnList(string serviceId)
         {
-            Assert.True(_services.Any(x => x.ID == serviceId));
+            Assert.True(_services.SelectMany(x => x.Instances).Any(y => y.Id == serviceId));
         }
     }
 }

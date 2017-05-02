@@ -1,6 +1,6 @@
 namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Model
 {
-    public class ServiceHealth
+    public class ServiceHealthDto
     {
         public string Node { get ;set; }
 

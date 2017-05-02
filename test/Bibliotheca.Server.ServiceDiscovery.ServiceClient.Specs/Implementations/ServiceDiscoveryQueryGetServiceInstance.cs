@@ -8,9 +8,9 @@ using System.Linq;
 namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementations
 {
     [Feature("ServiceDiscoveryQueryGetServiceByTags", "Getting service by tags have to return correct information about service")]
-    public class ServiceDiscoveryQueryGetServiceByTags
+    public class ServiceDiscoveryQueryGetServiceInstance
     {
-        private IList<ServiceInformation> _services;
+        private InstanceDto _instanceDto;
 
         [Scenario("Service discovery application should return information about registered service when user get service by tag")]
         public async Task ServiceDiscoveryApplicationShouldReturnInformationAboutRegisteredServicesWhenUserGetServiceByTag()
@@ -49,13 +49,13 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
         private async Task WhenUserGetInformationAboutServicesWithTag(string tag)
         {
             var serviceQuery = new ServiceDiscoveryQuery();
-            _services = await serviceQuery.GetServicesAsync(new ServerOptions { Address = "http://127.0.0.1:8500" }, new string[] { tag });
+            _instanceDto = await serviceQuery.GetServiceInstanceAsync(new ServerOptions { Address = "http://127.0.0.1:8500" }, new string[] { tag });
         }
 
         [Then("Application with id was returned")]
         private void ThenApplicationWithIdWasReturned(string serviceId1, string serviceId2)
         {
-            Assert.True(_services.Any(x => x.ID == serviceId1 || x.ID == serviceId2));
+            Assert.True(_instanceDto.Id == serviceId1 || _instanceDto.Id == serviceId2);
         }
     }
 }
