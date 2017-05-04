@@ -1,10 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <Description>Library with helper class for registration Bibliotheca microservices in service discovery.</Description>
     <AssemblyTitle>Bibliotheca.Server.ServiceDiscovery.ServiceClient</AssemblyTitle>
     <NeutralLanguage>C#</NeutralLanguage>
-    <VersionPrefix>1.0.14</VersionPrefix>
+    <VersionPrefix>1.0.15</VersionPrefix>
     <Authors>@mczachurski</Authors>
     <TargetFramework>netstandard1.6</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -19,7 +19,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="1.1.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="1.1.0" />
-    <PackageReference Include="Consul" Version="0.7.0.5" />
+    <PackageReference Include="Consul" Version="0.7.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <DotNetCliToolReference Include="libyear" Version="*" />
   </ItemGroup>
 
 </Project>
