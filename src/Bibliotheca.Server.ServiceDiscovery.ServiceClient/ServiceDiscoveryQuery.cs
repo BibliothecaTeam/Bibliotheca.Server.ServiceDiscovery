@@ -178,7 +178,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
                 Node = healthCheck.Node,
                 CheckID = healthCheck.CheckID,
                 Name = healthCheck.Name,
-                Status = healthCheck.Status,
+                Status = healthCheck.Status?.Status,
                 Notes = healthCheck.Notes,
                 Output = healthCheck.Output,
                 ServiceID = healthCheck.ServiceID,
