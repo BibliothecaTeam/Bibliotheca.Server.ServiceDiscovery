@@ -4,7 +4,7 @@
     <Description>Library with helper class for registration Bibliotheca microservices in service discovery.</Description>
     <AssemblyTitle>Bibliotheca.Server.ServiceDiscovery.ServiceClient</AssemblyTitle>
     <NeutralLanguage>C#</NeutralLanguage>
-    <VersionPrefix>1.0.17</VersionPrefix>
+    <VersionPrefix>1.0.18</VersionPrefix>
     <Authors>@mczachurski</Authors>
     <TargetFramework>netstandard1.6</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
