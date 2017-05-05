@@ -67,16 +67,23 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
             }
             else
             {
-                if (!_memoryCache.TryGetValue("HealthyInstances", out healthyInstnces))
+                var cacheKey = GetCacheKey(tags);
+                if (!_memoryCache.TryGetValue(cacheKey, out healthyInstnces))
                 {
                     healthyInstnces = await DownloadHealthyInstances(serverOptions, tags, healthyInstnces);
 
-                    _memoryCache.Set("HealthyInstances", healthyInstnces,
+                    _memoryCache.Set(cacheKey, healthyInstnces,
                         new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromSeconds(30)));
                 }
             }
 
             return healthyInstnces;
+        }
+
+        private string GetCacheKey(string[] tags)
+        {
+            var tag = string.Join("#", tags);
+            return $"HealthyInstances#";
         }
 
         private async Task<List<InstanceDto>> DownloadHealthyInstances(ServerOptions serverOptions, string[] tags, List<InstanceDto> healthyInstnces)
