@@ -98,12 +98,14 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 
         private async Task<IList<ServiceInformationDto>> GetServicesInformationAsync(ServerOptions serverOptions)
         {
-            var client = new ConsulClient((options) =>
+            QueryResult<Dictionary<string, AgentService>> services = null;
+            using(var client = new ConsulClient((options) => { 
+                options.Address = new Uri(serverOptions.Address); 
+            }))
             {
-                options.Address = new Uri(serverOptions.Address);
-            });
+                services = await client.Agent.Services();
+            }
 
-            var services = await client.Agent.Services();
             if(services.StatusCode != HttpStatusCode.OK)
             {
                 throw new ServiceDiscoveryResponseException("Exception during request to service discovery.");
@@ -126,12 +128,14 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 
         private async Task<IList<ServiceHealthDto>> GetServicesHealthAsync(ServerOptions serverOptions, string serviceName)
         {
-            var client = new ConsulClient((options) =>
-            {
+            QueryResult<ServiceEntry[]> servicesHealth = null;
+            using(var client = new ConsulClient((options) => {
                 options.Address = new Uri(serverOptions.Address);
-            });
-
-            var servicesHealth = await client.Health.Service(serviceName);
+            }))
+            {
+                servicesHealth = await client.Health.Service(serviceName);
+            }
+            
             if(servicesHealth.StatusCode != HttpStatusCode.OK)
             {
                 throw new ServiceDiscoveryResponseException("Exception during request to service discovery.");
