@@ -83,7 +83,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
         private string GetCacheKey(string[] tags)
         {
             var tag = string.Join("#", tags);
-            return $"HealthyInstances#";
+            return $"HealthyInstances#{tag}";
         }
 
         private async Task<List<InstanceDto>> DownloadHealthyInstances(ServerOptions serverOptions, string[] tags, List<InstanceDto> healthyInstnces)
