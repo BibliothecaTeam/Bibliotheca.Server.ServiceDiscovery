@@ -6,11 +6,19 @@ using System.Threading.Tasks;
 using Bibliotheca.Server.ServiceDiscovery.ServiceClient.Exceptions;
 using Bibliotheca.Server.ServiceDiscovery.ServiceClient.Model;
 using Consul;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 {
     public class ServiceDiscoveryQuery : IServiceDiscoveryQuery
     {
+        private readonly IMemoryCache _memoryCache;
+
+        public ServiceDiscoveryQuery(IMemoryCache memoryCache)
+        {
+            _memoryCache = memoryCache;
+        }
+
         public async Task<IList<ServiceDto>> GetServicesAsync(ServerOptions serverOptions)
         {
             var services = await GetServicesInformationAsync(serverOptions);
@@ -34,24 +42,63 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient
 
         public async Task<InstanceDto> GetServiceInstanceAsync(ServerOptions serverOptions, string[] tags)
         {
-            var services = await GetServicesInformationAsync(serverOptions, tags);
-            var servicesDtos = await GetServiceDtos(serverOptions, services);
+            List<InstanceDto> healthyInstnces = await GetHealthyInstances(serverOptions, tags);
 
-            var passesInstnces = new List<InstanceDto>();
-            foreach(var service in servicesDtos)
-            {
-                var instances = service.Instances.Where(x => x.HealthStatus == HealthStatusEnumDto.Passing);
-                passesInstnces.AddRange(instances);
-            }
-
-            if(passesInstnces.Count == 0)
+            if (healthyInstnces.Count == 0)
             {
                 return null;
             }
 
+            if (healthyInstnces.Count == 1)
+            {
+                return healthyInstnces[0];
+            }
+
+            var instance = SelectRandomInstance(healthyInstnces);
+            return instance;
+        }
+
+        private async Task<List<InstanceDto>> GetHealthyInstances(ServerOptions serverOptions, string[] tags)
+        {
+            List<InstanceDto> healthyInstnces = null;
+            if(_memoryCache == null)
+            {
+                healthyInstnces = await DownloadHealthyInstances(serverOptions, tags, healthyInstnces);
+            }
+            else
+            {
+                if (!_memoryCache.TryGetValue("HealthyInstances", out healthyInstnces))
+                {
+                    healthyInstnces = await DownloadHealthyInstances(serverOptions, tags, healthyInstnces);
+
+                    _memoryCache.Set("HealthyInstances", healthyInstnces,
+                        new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromSeconds(30)));
+                }
+            }
+
+            return healthyInstnces;
+        }
+
+        private async Task<List<InstanceDto>> DownloadHealthyInstances(ServerOptions serverOptions, string[] tags, List<InstanceDto> healthyInstnces)
+        {
+            var services = await GetServicesInformationAsync(serverOptions, tags);
+            var servicesDtos = await GetServiceDtos(serverOptions, services);
+
+            healthyInstnces = new List<InstanceDto>();
+            foreach (var service in servicesDtos)
+            {
+                var instances = service.Instances.Where(x => x.HealthStatus == HealthStatusEnumDto.Passing);
+                healthyInstnces.AddRange(instances);
+            }
+
+            return healthyInstnces;
+        }
+
+        private static InstanceDto SelectRandomInstance(List<InstanceDto> healthyInstnces)
+        {
             var random = new Random();
-            var index = random.Next(0, passesInstnces.Count - 1);
-            return passesInstnces[index];
+            var index = random.Next(0, healthyInstnces.Count - 1);
+            return healthyInstnces[index];
         }
 
         private async Task<List<ServiceDto>> GetServiceDtos(ServerOptions serverOptions, IList<ServiceInformationDto> services)

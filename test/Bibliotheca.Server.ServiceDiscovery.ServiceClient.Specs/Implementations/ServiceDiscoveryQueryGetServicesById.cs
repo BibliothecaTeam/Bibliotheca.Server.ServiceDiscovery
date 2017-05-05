@@ -48,7 +48,7 @@ namespace Bibliotheca.Server.ServiceDiscovery.ServiceClient.Specs.Implementation
         [When("User get information about service")]
         private async Task WhenUserGetInformationAboutService(string serviceName)
         {
-            var serviceQuery = new ServiceDiscoveryQuery();
+            var serviceQuery = new ServiceDiscoveryQuery(null);
             _services = await serviceQuery.GetServicesAsync(new ServerOptions { Address = "http://127.0.0.1:8500" }, serviceName);
         }
 
